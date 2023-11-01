@@ -8,13 +8,14 @@
 #     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 BOT_NAME = "callCenter"
+LOG_LEVEL = 'WARNING'
 
 SPIDER_MODULES = ["callCenter.spiders"]
 NEWSPIDER_MODULE = "callCenter.spiders"
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-#USER_AGENT = "callCenter (+http://www.yourdomain.com)"
+USER_AGENT = "Mozilla/5.0 (iPad; CPU OS 16_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/114.0.5735.124 Mobile/15E148 Safari/604.1"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True

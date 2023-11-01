@@ -7,11 +7,12 @@ from scrapy.http import HtmlResponse
 
 class PagejSpider(scrapy.Spider):
     name = "pagej"
-    allowed_domains = ["pagejaune.fr"]
-    start_urls = ["https://pagejaune.fr"]
+    allowed_domains = ["google.com"]
+    start_urls = ["https://www.google.com/"]
+    base_url = "https://webcache.googleusercontent.com/search?q=cache:https://www.pagesjaunes.fr"
 
     def __init__(self, *args, **kwargs):
-        super(GcenterSpider, self).__init__(*args, **kwargs)
+        super(PagejSpider, self).__init__(*args, **kwargs)
 
         print('🚀  Starting the engine...')
 
@@ -20,17 +21,21 @@ class PagejSpider(scrapy.Spider):
         options.add_argument('--ignore-certificate-errors')
         
         self.driver = uc.Chrome(options=options, headless=False)
+        print("start End")
 
     def parse(self, response):
         print("Parsing")
-        self.driver.get(response.url)
+        self.driver.get("https://webcache.googleusercontent.com/search?q=cache:https://www.pagesjaunes.fr/annuaire/crevoux-05/hotels")
         website = self.driver.page_source
         results = BeautifulSoup(website, 'html.parser')
 
-        hotel_link = results.select('.bi-content')
-        for link in hotel_link:
-            link.find("a",{"class":"bi-denomination"}).get('href')
-            target_url = self.base_url + link
+        # hotel_links = results.select('.bi-content')
+        hotel_links = results.select('a[href*="pros/"]')
+        for link in hotel_links:
+            # link.find("a",{"class":"bi-denomination"}).get('href')
+            href = link.get('href')
+            target_url = self.base_url + href
+            print(target_url)
             self.driver.get(target_url)
 
             html_content  = self.driver.page_source
@@ -69,7 +74,7 @@ class PagejSpider(scrapy.Spider):
             website = ''
 
         try:
-            tel = results.find("span",{"class":"coord-numero-inscription"}).text
+            tel = results.find("span",{"class":"coord-numero"}).text
         except:
             tel = ''
 
@@ -92,7 +97,7 @@ class PagejSpider(scrapy.Spider):
         yield {
             'Name': name,
             'Address': address,
-            'Postal Code': postal_code,
+            # 'Postal Code': postal_code,
             'Website': website,
             'Telephone': tel,
             'Stars': stars,

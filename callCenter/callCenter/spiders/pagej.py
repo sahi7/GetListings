@@ -1,12 +1,19 @@
 import re
+import time
 import scrapy
+import random
 from bs4 import BeautifulSoup
 from scrapy.http import HtmlResponse
+from selenium import webdriver
 from selenium.webdriver.common.by import By
-import seleniumwire.undetected_chromedriver as uc
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
+
+#Selenium stealth -- https://www.zenrows.com/blog/selenium-stealth#scrape-with-stealth
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager #https://pypi.org/project/webdriver-manager/
+from selenium_stealth import stealth
 
 
 class PagejSpider(scrapy.Spider):
@@ -22,22 +29,58 @@ class PagejSpider(scrapy.Spider):
 
         print('🚀  Starting the engine...')
 
-        options = uc.ChromeOptions()
-        options.add_argument('--lang=fr')
+        user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
+        ]
+
+        user_agent = random.choice(user_agents)
+        service = ChromeService(executable_path=ChromeDriverManager().install()) # create a new Service instance and specify path to Chromedriver executable
+
+        # options = uc.ChromeOptions()
+        options = webdriver.ChromeOptions()
+        # options.add_argument("--headless")
         options.add_argument('--ignore-certificate-errors')
+        options.add_argument('--disable-extensions') # disable extensions
+        options.add_argument('--no-sandbox') # disable sandbox mode
+        options.add_argument('--start-maximized') # start the browser window in maximized mode
+        options.add_argument('--disable-popup-blocking') # disable pop-up blocking
+        options.add_argument('--disable-blink-features=AutomationControlled') # disable the AutomationControlled feature of Blink rendering engine
+        options.add_argument(f'user-agent={user_agent}') #User Agents can also be set using execute_cdp_cmd
+
         
-        self.driver = uc.Chrome(options=options, headless=False)
+        # self.driver = uc.Chrome(options=options, headless=False)
+        self.driver = webdriver.Chrome(service=service, options=options) #driver instance
+        self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") # Change the property value of the navigator for webdriver to undefined
+        
+        stealth(self.driver,
+            languages=["fr-FR", "fr"],
+            vendor="Google Inc.",
+            platform="Win32",
+            webgl_vendor="Intel Inc.",
+            renderer="Intel Iris OpenGL Engine",
+            fix_hairline=True,
+        )
+
 
     
     def parse(self, response, next_page=None):
-        print(" 🕸️  Parsing")
+        print('🕸️  Parsing')
         actions = ActionChains(self.driver)
         # self.driver.get("https://webcache.googleusercontent.com/search?q=cache:https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
         if next_page is None:
-            self.driver.get("https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
+            self.driver.get("https://opensea.io/")
+            # self.driver.get("https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
         else:
             print('Getting Next page')
             self.driver.get(next_page)
+        driver.save_screenshot("opensea.png")
+        time.sleep(160)
         website = self.driver.page_source
         results = BeautifulSoup(website, 'html.parser')
 

@@ -3,3 +3,5 @@ Scrapy==2.11.0
 selenium==4.9.1
 beautifulsoup4==4.12.2
 selenium-wire==5.1.0
+selenium-stealth==1.0.6
+webdriver-manager==4.0.1

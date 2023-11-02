@@ -5,10 +5,10 @@ import random
 from bs4 import BeautifulSoup
 from scrapy.http import HtmlResponse
 from selenium import webdriver
+from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.common.action_chains import ActionChains
 
 #Selenium stealth -- https://www.zenrows.com/blog/selenium-stealth#scrape-with-stealth
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -71,54 +71,61 @@ class PagejSpider(scrapy.Spider):
     
     def parse(self, response, next_page=None):
         print('🕸️  Parsing')
-        actions = ActionChains(self.driver)
         # self.driver.get("https://webcache.googleusercontent.com/search?q=cache:https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
         if next_page is None:
-            self.driver.get("https://opensea.io/")
-            # self.driver.get("https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
+            # self.driver.get("https://opensea.io/")
+            self.driver.get("https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
         else:
             print('Getting Next page')
             self.driver.get(next_page)
-        driver.save_screenshot("opensea.png")
-        time.sleep(160)
+        self.driver.save_screenshot("opensea.png")
+        time.sleep(random.randint(2, 9))
         website = self.driver.page_source
         results = BeautifulSoup(website, 'html.parser')
 
-        hotel_links = results.select('.bi-content')
+        hotel_links = results.select('.bi-content a[href*="pros/"]')
         # hotel_links = results.select('.results a[href*="pros/"]')
-        for link in hotel_links:
-            # link.find("a",{"class":"bi-denomination"}).get('href')
-            link.find("a",{"class":"bi-denomination"})
-            href = link.get('href')
-            target_url = self.base_url + href
-            print(target_url)
-            self.driver.get(target_url)
+        if hotel_links:
+            print('Len of Hotel Links: ',len(hotel_links))
+            for link in hotel_links:
+                # link.find("a",{"class":"bi-denomination"}).get('href')
+                href = link.get('href')
+                target_url = self.base_url + href
+                print(target_url)
+                self.driver.get(target_url)
 
-            html_content  = self.driver.page_source
-            html_response = HtmlResponse(self.driver.current_url, body=html_content, encoding='utf-8')
-
-
-            yield from self.scrape_content(html_response)
+                html_content  = self.driver.page_source
+                html_response = HtmlResponse(self.driver.current_url, body=html_content, encoding='utf-8')
 
 
-        # Check for Pafination
-        next_page_link = results.find('a', {'id': 'pagination-next'})
-        if next_page_link:
-            actions.context_click(next_page_link).perform()
+                yield from self.scrape_content(html_response)
 
-            clickedhref = next_page_link.get_attribute('href')
-            if clickedhref == "#":
-                next_page_link.click()
+
+        # Check for Pagination
+        while True:
+            next_page_link = self.driver.find_element(By.CSS_SELECTOR, "a#pagination-next")
+            if next_page_link:
+                ActionChains(self.driver)\
+                    .move_to_element_with_offset(next_page_link, random.randint(2, 12), random.randint(0, 9))\
+                    .perform()
+                
+                ActionChains(self.driver)\
+                    .click(next_page_link)\
+                    .perform()
+                
+
+                time.sleep(0.5)
+
+                WebDriverWait(self.driver, 10).until(EC.url_changes(self.driver.current_url))
+                
                 wait = WebDriverWait(self.driver, 10)
                 wait.until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
-                next_page_url = self.driver.current_url
-            else:
-                next_page_href = next_page_link.get('href')
-                next_page_url = self.base_url + next_page_href
-                print(f"Next page: {next_page_url}")
-                self.driver.get(next_page_url)
 
-            yield from self.parse(response, next_page_url)
+                current_url = self.driver.current_url  
+                yield from self.parse(response, current_url)
+
+            else:
+                break
 
 
     def scrape_content(self, response_data):

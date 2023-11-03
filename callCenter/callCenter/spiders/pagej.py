@@ -105,22 +105,27 @@ class PagejSpider(scrapy.Spider):
         while True:
             next_page_link = self.driver.find_element(By.CSS_SELECTOR, "a#pagination-next")
             wait = WebDriverWait(self.driver, 10)
-            popup = wait.until(EC.visibility_of_element_located((By.ID, 'didomi-notice-agree-button')))
-            # popup = self.driver.find_element(By.ID, 'didomi-notice-agree-button')
-            if next_page_link:
-                # ActionChains(self.driver)\
-                #     .move_to_element_with_offset(next_page_link, random.randint(2, 12), random.randint(0, 9))\
-                #     .perform()
-                
-                # ActionChains(self.driver)\
-                #     .click(next_page_link)\
-                #     .perform()
-                self.driver.execute_script("arguments[0].scrollIntoView(true);", next_page_link)
-                
-                time.sleep(7)
-                next_page_link.click()
-                
 
+            try:
+                popup = self.driver.find_element(By.ID, 'didomi-notice-agree-button')
+                # popup = wait.until(EC.visibility_of_element_located((By.ID, 'didomi-notice-agree-button')))
+                time.sleep(random.uniform(0.5, 1.5))
+                ActionChains(self.driver)\
+                    .click(popup)\
+                    .perform()
+            except:
+                pass
+            
+            if next_page_link:
+                time.sleep(random.uniform(0.5, 2.7))
+                ActionChains(self.driver)\
+                    .move_to_element_with_offset(next_page_link, random.randint(2, 12), random.randint(0, 9))\
+                    .perform()
+                
+                ActionChains(self.driver)\
+                    .click(next_page_link)\
+                    .perform()
+                self.driver.execute_script("arguments[0].scrollIntoView(true);", next_page_link)
                 time.sleep(0.5)
 
                 WebDriverWait(self.driver, 10).until(EC.url_changes(self.driver.current_url))

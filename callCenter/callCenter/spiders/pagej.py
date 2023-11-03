@@ -79,7 +79,7 @@ class PagejSpider(scrapy.Spider):
             print('Getting Next page')
             self.driver.get(next_page)
         self.driver.save_screenshot("opensea.png")
-        time.sleep(random.randint(2, 9))
+        time.sleep(random.randint(2, 5))
         website = self.driver.page_source
         results = BeautifulSoup(website, 'html.parser')
 
@@ -104,14 +104,21 @@ class PagejSpider(scrapy.Spider):
         # Check for Pagination
         while True:
             next_page_link = self.driver.find_element(By.CSS_SELECTOR, "a#pagination-next")
+            wait = WebDriverWait(self.driver, 10)
+            popup = wait.until(EC.visibility_of_element_located((By.ID, 'didomi-notice-agree-button')))
+            # popup = self.driver.find_element(By.ID, 'didomi-notice-agree-button')
             if next_page_link:
-                ActionChains(self.driver)\
-                    .move_to_element_with_offset(next_page_link, random.randint(2, 12), random.randint(0, 9))\
-                    .perform()
+                # ActionChains(self.driver)\
+                #     .move_to_element_with_offset(next_page_link, random.randint(2, 12), random.randint(0, 9))\
+                #     .perform()
                 
-                ActionChains(self.driver)\
-                    .click(next_page_link)\
-                    .perform()
+                # ActionChains(self.driver)\
+                #     .click(next_page_link)\
+                #     .perform()
+                self.driver.execute_script("arguments[0].scrollIntoView(true);", next_page_link)
+                
+                time.sleep(7)
+                next_page_link.click()
                 
 
                 time.sleep(0.5)

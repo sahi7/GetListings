@@ -22,6 +22,7 @@ class PagejSpider(scrapy.Spider):
     start_urls = ["https://www.google.com/"]
     # base_url = "https://webcache.googleusercontent.com/search?q=cache:https://www.pagesjaunes.fr"
     base_url = "https://www.pagesjaunes.fr"
+    old_url = ""
 
 
     def __init__(self, *args, **kwargs):
@@ -44,7 +45,7 @@ class PagejSpider(scrapy.Spider):
 
         # options = uc.ChromeOptions()
         options = webdriver.ChromeOptions()
-        # options.add_argument("--headless")
+        options.add_argument("--headless")
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--disable-extensions') # disable extensions
         options.add_argument('--no-sandbox') # disable sandbox mode
@@ -74,12 +75,13 @@ class PagejSpider(scrapy.Spider):
         # self.driver.get("https://webcache.googleusercontent.com/search?q=cache:https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
         if next_page is None:
             # self.driver.get("https://opensea.io/")
-            self.driver.get("https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
+            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=creche&ou=Paris+%2875%29&univers=pagesjaunes&idOu=L07505600")
         else:
             print('Getting Next page')
             self.driver.get(next_page)
         self.driver.save_screenshot("opensea.png")
         time.sleep(random.randint(2, 5))
+        self.old_url = self.driver.current_url
         website = self.driver.page_source
         results = BeautifulSoup(website, 'html.parser')
 
@@ -88,6 +90,7 @@ class PagejSpider(scrapy.Spider):
         if hotel_links:
             print('Len of Hotel Links: ',len(hotel_links))
             for link in hotel_links:
+                pass
                 # link.find("a",{"class":"bi-denomination"}).get('href')
                 href = link.get('href')
                 target_url = self.base_url + href
@@ -100,11 +103,20 @@ class PagejSpider(scrapy.Spider):
 
                 yield from self.scrape_content(html_response)
 
+        self.driver.get(self.old_url)
+        time.sleep(random.uniform(0.5, 1.5))
 
         # Check for Pagination
         while True:
+            try:
+                wait = WebDriverWait(self.driver, 15)
+                wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a#pagination-next")))
+            except:
+                self.driver.refresh()
+            
+            time.sleep(random.uniform(0.5, 1.5))
             next_page_link = self.driver.find_element(By.CSS_SELECTOR, "a#pagination-next")
-            wait = WebDriverWait(self.driver, 10)
+            
 
             try:
                 popup = self.driver.find_element(By.ID, 'didomi-notice-agree-button')
@@ -125,16 +137,12 @@ class PagejSpider(scrapy.Spider):
                 ActionChains(self.driver)\
                     .click(next_page_link)\
                     .perform()
-                self.driver.execute_script("arguments[0].scrollIntoView(true);", next_page_link)
-                time.sleep(0.5)
-
-                WebDriverWait(self.driver, 10).until(EC.url_changes(self.driver.current_url))
+                print('Before')
                 
-                wait = WebDriverWait(self.driver, 10)
-                wait.until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
-
                 current_url = self.driver.current_url  
+                print('Current URL', current_url)
                 yield from self.parse(response, current_url)
+                print('After yield')
 
             else:
                 break
@@ -159,6 +167,8 @@ class PagejSpider(scrapy.Spider):
                     postal_code_match = re.search(r'\b\d{5}\b', address)
                     if postal_code_match:
                         postal_code = postal_code_match.group()
+                    else:
+                        postal_code = ''
             else:
                 address = ''
         except:

@@ -53,6 +53,8 @@ class PagejSpider(scrapy.Spider):
         options.add_argument('--disable-popup-blocking') # disable pop-up blocking
         options.add_argument('--disable-blink-features=AutomationControlled') # disable the AutomationControlled feature of Blink rendering engine
         options.add_argument(f'user-agent={self.user_agent}') #User Agents can also be set using execute_cdp_cmd
+        options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        options.add_experimental_option('useAutomationExtension', False)
 
         
         # self.driver = uc.Chrome(options=options, headless=False)

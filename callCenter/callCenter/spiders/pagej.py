@@ -24,13 +24,7 @@ class PagejSpider(scrapy.Spider):
     base_url = "https://www.pagesjaunes.fr"
     old_url = ""
 
-
-    def __init__(self, *args, **kwargs):
-        super(PagejSpider, self).__init__(*args, **kwargs)
-
-        print('🚀  Starting the engine...')
-
-        user_agents = [
+    user_agents = [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
@@ -39,20 +33,26 @@ class PagejSpider(scrapy.Spider):
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
             'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_1) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.1 Safari/605.1.15',
         ]
+    user_agent = random.choice(user_agents)
 
-        user_agent = random.choice(user_agents)
+
+    def __init__(self, *args, **kwargs):
+        super(PagejSpider, self).__init__(*args, **kwargs)
+
+        print('🚀  Starting the engine...')
+
         service = ChromeService(executable_path=ChromeDriverManager().install()) # create a new Service instance and specify path to Chromedriver executable
 
         # options = uc.ChromeOptions()
         options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
+        # options.add_argument("--headless")
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--disable-extensions') # disable extensions
         options.add_argument('--no-sandbox') # disable sandbox mode
         options.add_argument('--start-maximized') # start the browser window in maximized mode
         options.add_argument('--disable-popup-blocking') # disable pop-up blocking
         options.add_argument('--disable-blink-features=AutomationControlled') # disable the AutomationControlled feature of Blink rendering engine
-        options.add_argument(f'user-agent={user_agent}') #User Agents can also be set using execute_cdp_cmd
+        options.add_argument(f'user-agent={self.user_agent}') #User Agents can also be set using execute_cdp_cmd
 
         
         # self.driver = uc.Chrome(options=options, headless=False)
@@ -67,7 +67,9 @@ class PagejSpider(scrapy.Spider):
             renderer="Intel Iris OpenGL Engine",
             fix_hairline=True,
         )
-
+    
+    def rotate_user_agent(self):
+        self.driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": self.user_agent})
 
     
     def parse(self, response, next_page=None):
@@ -88,7 +90,7 @@ class PagejSpider(scrapy.Spider):
         hotel_links = results.select('.bi-content a[href*="pros/"]')
         # hotel_links = results.select('.results a[href*="pros/"]')
         if hotel_links:
-            print('Len of Hotel Links: ',len(hotel_links))
+            print('Len of Hotel Links: ', len(hotel_links))
             for link in hotel_links:
                 pass
                 # link.find("a",{"class":"bi-denomination"}).get('href')
@@ -102,7 +104,8 @@ class PagejSpider(scrapy.Spider):
 
 
                 yield from self.scrape_content(html_response)
-
+        self.rotate_user_agent()
+        time.sleep(random.uniform(0.6, 1.5))
         self.driver.get(self.old_url)
         time.sleep(random.uniform(0.5, 1.5))
 
@@ -156,19 +159,17 @@ class PagejSpider(scrapy.Spider):
         except:
             name = ''
 
+        postal_code = ""
         try:
             address_element = results.select_one('.address-container span.noTrad')
             if address_element:
                 address = address_element.text
                 # Extract postal code if available
-                postal_code = ""
                 if address:
                     # Use a regular expression to find a postal code pattern (5 digits)
                     postal_code_match = re.search(r'\b\d{5}\b', address)
                     if postal_code_match:
                         postal_code = postal_code_match.group()
-                    else:
-                        postal_code = ''
             else:
                 address = ''
         except:

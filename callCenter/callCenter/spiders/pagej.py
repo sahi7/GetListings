@@ -21,7 +21,6 @@ class PagejSpider(scrapy.Spider):
     name = "pagej"
     allowed_domains = ["google.com"]
     start_urls = ["https://www.google.com/"]
-    # base_url = "https://webcache.googleusercontent.com/search?q=cache:https://www.pagesjaunes.fr"
     base_url = "https://www.pagesjaunes.fr"
     old_url = ""
 
@@ -58,7 +57,6 @@ class PagejSpider(scrapy.Spider):
         options.add_experimental_option('useAutomationExtension', False)
 
         
-        # self.driver = uc.Chrome(options=options, headless=False)
         self.driver = webdriver.Chrome(service=service, options=options) #driver instance
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") # Change the property value of the navigator for webdriver to undefined
         
@@ -80,17 +78,13 @@ class PagejSpider(scrapy.Spider):
     
     def parse(self, response, next_page=None):
         print('🕸️  Parsing')
-        # self.driver.get("https://webcache.googleusercontent.com/search?q=cache:https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
         if next_page is None:
-            # self.driver.get("https://opensea.io/")
-            # self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=creche&ou=Paris+%2875%29&univers=pagesjaunes&idOu=L07505600")
             self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=vigneron&ou=Aquitaine&idOu=R72&page=64&contexte=QQ2ff1pj2Y3Ar9lxJVV2k5tv23s712oGOtu8VfF1GfI%3D&quoiQuiInterprete=vigneron")
         else:
             self.driver.quit()
             time.sleep(random.randint(2, 5))
             self.run_stealth()
             print('Getting Next page')
-            # self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": random.choice(self.user_agents)})
             self.driver.get(next_page)
         self.driver.save_screenshot("opensea.png")
         time.sleep(random.randint(2, 5))
@@ -139,7 +133,6 @@ class PagejSpider(scrapy.Spider):
 
             try:
                 popup = self.driver.find_element(By.ID, 'didomi-notice-agree-button')
-                # popup = wait.until(EC.visibility_of_element_located((By.ID, 'didomi-notice-agree-button')))
                 time.sleep(random.uniform(0.5, 1.5))
                 ActionChains(self.driver)\
                     .click(popup)\

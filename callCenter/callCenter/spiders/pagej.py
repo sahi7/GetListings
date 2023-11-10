@@ -9,6 +9,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from rules.actions import Actions
 
 #Selenium stealth -- https://www.zenrows.com/blog/selenium-stealth#scrape-with-stealth
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -25,10 +26,8 @@ class PagejSpider(scrapy.Spider):
     old_url = ""
 
     user_agents = [
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/118.0.2088.88',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
-            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Vivaldi/6.4.3160.41',
             'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
@@ -40,7 +39,9 @@ class PagejSpider(scrapy.Spider):
         super(PagejSpider, self).__init__(*args, **kwargs)
 
         print('🚀  Starting the engine...')
+        self.run_stealth()
 
+    def run_stealth(self):
         service = ChromeService(executable_path=ChromeDriverManager().install()) # create a new Service instance and specify path to Chromedriver executable
 
         # options = uc.ChromeOptions()
@@ -52,7 +53,7 @@ class PagejSpider(scrapy.Spider):
         options.add_argument('--start-maximized') # start the browser window in maximized mode
         options.add_argument('--disable-popup-blocking') # disable pop-up blocking
         options.add_argument('--disable-blink-features=AutomationControlled') # disable the AutomationControlled feature of Blink rendering engine
-        options.add_argument(f'user-agent={self.user_agent}') #User Agents can also be set using execute_cdp_cmd
+        options.add_argument(f'user-agent={random.choice(self.user_agents)}') #User Agents can also be set using execute_cdp_cmd
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
 
@@ -70,18 +71,26 @@ class PagejSpider(scrapy.Spider):
             fix_hairline=True,
         )
     
-    def rotate_user_agent(self):
-        self.driver.execute_cdp_cmd("Network.setUserAgentOverride", {"userAgent": self.user_agent})
-
+    def rotate_proxy_and_user_agent(self):
+        # Set up the driver with the new proxy and user agent
+        proxy = self.proxies[0]
+        options = self.driver.options
+        options.add_argument(f'--proxy-server={proxy}')
+        options.add_argument(f'user-agent={self.user_agent}')
     
     def parse(self, response, next_page=None):
         print('🕸️  Parsing')
         # self.driver.get("https://webcache.googleusercontent.com/search?q=cache:https://www.pagesjaunes.fr/annuaire/region/provence-alpes-cote-d-azur/hotels")
         if next_page is None:
             # self.driver.get("https://opensea.io/")
-            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=creche&ou=Paris+%2875%29&univers=pagesjaunes&idOu=L07505600")
+            # self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=creche&ou=Paris+%2875%29&univers=pagesjaunes&idOu=L07505600")
+            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=vigneron&ou=Aquitaine&idOu=R72&page=64&contexte=QQ2ff1pj2Y3Ar9lxJVV2k5tv23s712oGOtu8VfF1GfI%3D&quoiQuiInterprete=vigneron")
         else:
+            self.driver.quit()
+            time.sleep(random.randint(2, 5))
+            self.run_stealth()
             print('Getting Next page')
+            # self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": random.choice(self.user_agents)})
             self.driver.get(next_page)
         self.driver.save_screenshot("opensea.png")
         time.sleep(random.randint(2, 5))
@@ -94,22 +103,27 @@ class PagejSpider(scrapy.Spider):
         if hotel_links:
             print('Len of Hotel Links: ', len(hotel_links))
             for link in hotel_links:
-                pass
                 # link.find("a",{"class":"bi-denomination"}).get('href')
                 href = link.get('href')
                 target_url = self.base_url + href
                 print(target_url)
+                time.sleep(random.randint(2, 5))
                 self.driver.get(target_url)
+                time.sleep(random.randint(5, 15))
 
                 html_content  = self.driver.page_source
                 html_response = HtmlResponse(self.driver.current_url, body=html_content, encoding='utf-8')
 
+                scroll_port = random.randint(300, 800)
+                Actions.scroll_page('down', scroll_port)
 
+                time.sleep(random.uniform(0.6, 1.5))
                 yield from self.scrape_content(html_response)
-        self.rotate_user_agent()
+
+        print(self.driver.execute_script("return navigator.userAgent;"))
         time.sleep(random.uniform(0.6, 1.5))
         self.driver.get(self.old_url)
-        time.sleep(random.uniform(0.5, 1.5))
+        time.sleep(random.uniform(0.5, 2.5))
 
         # Check for Pagination
         while True:
@@ -139,15 +153,15 @@ class PagejSpider(scrapy.Spider):
                     .move_to_element_with_offset(next_page_link, random.randint(2, 12), random.randint(0, 9))\
                     .perform()
                 
+                
                 ActionChains(self.driver)\
                     .click(next_page_link)\
                     .perform()
-                print('Before')
+                
                 
                 current_url = self.driver.current_url  
                 print('Current URL', current_url)
                 yield from self.parse(response, current_url)
-                print('After yield')
 
             else:
                 break

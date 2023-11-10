@@ -45,7 +45,7 @@ class PagejSpider(scrapy.Spider):
 
         # options = uc.ChromeOptions()
         options = webdriver.ChromeOptions()
-        # options.add_argument("--headless")
+        options.add_argument("--headless")
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--disable-extensions') # disable extensions
         options.add_argument('--no-sandbox') # disable sandbox mode
@@ -78,8 +78,8 @@ class PagejSpider(scrapy.Spider):
     
     def parse(self, response, next_page=None):
         print('🕸️  Parsing')
-        if next_page is None:
-            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=vigneron&ou=Aquitaine&idOu=R72&page=64&contexte=QQ2ff1pj2Y3Ar9lxJVV2k5tv23s712oGOtu8VfF1GfI%3D&quoiQuiInterprete=vigneron")
+        if next_page is None:  
+            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=entreprise%20nettoyage&ou=Lyon%20%2869%29&idOu=Z06912300&page=22&contexte=dDGj/wkstzkmG/odNjPiUqIWx1cNjkwoclEBtRAn/1mCF901EO7wa6zIxVH6xJIKGLp0f4x9Kbt%2BJ4WShepAXGuynYiAynEuMCjFQdQp53DE3L4izNO7dKK6HDIwhAq2khvma8sACDupzXkvf/7N6twkC6JWcgfbAuWZ1TeESL9niruPR2uoulzdehjZwtWV5Wkmi7Vy9jM5h4SytiHhrgxISMRndNFsTX8Pg%2Byl0iE%3D&quoiQuiInterprete=entreprise%20nettoyage")
         else:
             self.driver.quit()
             time.sleep(random.randint(2, 5))

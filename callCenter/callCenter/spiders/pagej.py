@@ -9,6 +9,7 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 from rules.actions import Actions
 
 #Selenium stealth -- https://www.zenrows.com/blog/selenium-stealth#scrape-with-stealth
@@ -79,7 +80,7 @@ class PagejSpider(scrapy.Spider):
     def parse(self, response, next_page=None):
         print('🕸️  Parsing')
         if next_page is None: 
-            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=vigneron&ou=Aquitaine&idOu=R72&page=64&contexte=QQ2ff1pj2Y3Ar9lxJVV2k5tv23s712oGOtu8VfF1GfI%3D&quoiQuiInterprete=vigneron")
+            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=creche&ou=Paris%20%2875%29&idOu=L07505600&page=44&contexte=hy7zwbpZSMHUpVqgxpEkl0EctOb6nJJQMR5z%2BTYj9nteQBFQQzOryVgG66OrlgP/tRoJa/wyZt9wOp2zAprUc195dKn8R2IZS6fMh15aky/cJAuiVnIH2wLlmdU3hEi/r//5n6YOW9ABwlyXtHYYXOhT1EP3a91yIrlxPZnt34ntQXpNkEZrnegl6pfCeCvwNFhF4m7KqnNbpltuIjBNdCXcBM1EkZBveYSc9/kYjlzIvwBUJM1hgvg/s8Hvj0qd/cWjwCHKdKv9B0iI2HRFWwwR/7H86O1a4itCRjJBoScJtVU%2B72KRut9XR/StuLsX&quoiQuiInterprete=creche")
         else:
             self.driver.quit()
             time.sleep(random.randint(2, 5))
@@ -217,7 +218,7 @@ class PagejSpider(scrapy.Spider):
             'Address': address,
             'Postal Code': postal_code,
             'Website': website,
-            'Telephone': tel,
-            'Stars': stars,
-            'Tariffs': all_tariffs
+            'Telephone': tel
+            # 'Stars': stars,
+            # 'Tariffs': all_tariffs
         }

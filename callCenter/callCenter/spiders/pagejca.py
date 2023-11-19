@@ -6,18 +6,17 @@ from bs4 import BeautifulSoup
 class PagejcaSpider(scrapy.Spider):
     name = "pagejca"
     allowed_domains = ["www.pagesjaunes.ca"]
-    start_urls = ["https://www.pagesjaunes.ca/search/si/1/magasins+de+v%C3%AAtements/Montreal+Qc"]
-    max_pages = 10
+    start_urls = ["https://www.pagesjaunes.ca/search/si/1/Magasin+de+vêtements/Ile+De+Montreal+-+Centre+QC"]
+    max_pages = 74
 
     def start_requests(self):
         for page_number in range(1, self.max_pages + 1):
-            url = f'https://www.pagesjaunes.ca/search/si/{page_number}/magasins+de+v%C3%AAtements/Montreal+Qc'
+            url = f'https://www.pagesjaunes.ca/search/si/{page_number}/Magasin+de+vêtements/Ile+De+Montreal+-+Centre+QC'
             yield scrapy.Request(url=url, meta={'page_number': page_number}, callback=self.parse)
 
     def parse(self, response):
         page_number = response.meta.get('page_number')
         website = BeautifulSoup(response.text, "html.parser")
-        unique_entries = set()
         
         # Extract product links
         product_block = website.select_one('.page__container_wrap .resultList')
@@ -41,19 +40,16 @@ class PagejcaSpider(scrapy.Spider):
             except:
                 full_address = ''
             
-            entry_identifier = (tel)
             
-            if not redirected_url or redirected_url == '':
-                data = {
-                        'Page': page_number,
-                        'Name': title,
-                        'Telephone': tel,
-                        'Address': full_address
-                    }
-                if entry_identifier not in unique_entries:
-                    unique_entries.add(entry_identifier)
-                    yield data
-                else:
-                    print("Duplicate result found:", entry_identifier)
+            # if not redirected_url or redirected_url == '':
+            data = {
+                    'Page': page_number,
+                    'Name': title,
+                    'Address': full_address,
+                    'Website': redirected_url,
+                    'Telephone': tel,
+                    'Ville': "Ile De Montreal - Centre QC"
+                }
+            yield data
 
 

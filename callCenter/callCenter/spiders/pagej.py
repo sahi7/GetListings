@@ -56,6 +56,7 @@ class PagejSpider(scrapy.Spider):
         options.add_argument(f'user-agent={random.choice(self.user_agents)}') #User Agents can also be set using execute_cdp_cmd
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
+        options.add_experimental_option('excludeSwitches', ['enable-logging'])
 
         
         self.driver = webdriver.Chrome(service=service, options=options) #driver instance
@@ -80,7 +81,7 @@ class PagejSpider(scrapy.Spider):
     def parse(self, response, next_page=None):
         print('🕸️  Parsing')
         if next_page is None: 
-            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=Creche&ou=Bretagne&idOu=R53&page=8&contexte=ujNgZzpPHeaZIsFBYNbdX0EctOb6nJJQMR5z%2BTYj9nteQBFQQzOryVgG66OrlgP/VZDxIt9wnf1GT31ETsHWBuXIYLPOnYVrkJX2ZjOAuak%3D&quoiQuiInterprete=Creche")
+            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=entreprise+nettoyage&ou=Bourgogne-Franche-Comt%C3%A9&univers=pagesjaunes&idOu=R27")
         else:
             self.driver.quit()
             time.sleep(random.randint(2, 5))

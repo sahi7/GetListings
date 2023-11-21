@@ -37,6 +37,7 @@ class PagejcaSpider(scrapy.Spider):
                 addr = block.find('span', class_='listing__address--full')
                 child_texts = [span.text.strip() for span in addr.find_all('span', class_='jsMapBubbleAddress')]
                 full_address = ' '.join(child_texts)
+                # @todo - Add block for postal code
             except:
                 full_address = ''
             

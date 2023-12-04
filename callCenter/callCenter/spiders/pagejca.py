@@ -37,9 +37,12 @@ class PagejcaSpider(scrapy.Spider):
                 addr = block.find('span', class_='listing__address--full')
                 child_texts = [span.text.strip() for span in addr.find_all('span', class_='jsMapBubbleAddress')]
                 full_address = ' '.join(child_texts)
-                # @todo - Add block for postal code
             except:
                 full_address = ''
+            try:
+                postal_code = block.find('span', {'itemprop': 'postalCode'}).text
+            except:
+                postal_code = ''
             
             
             # if not redirected_url or redirected_url == '':
@@ -47,6 +50,7 @@ class PagejcaSpider(scrapy.Spider):
                     'Page': page_number,
                     'Name': title,
                     'Address': full_address,
+                    'Postal Code': postal_code,
                     'Website': redirected_url,
                     'Telephone': tel,
                     'Ville': "Ile De Montreal - Centre QC"

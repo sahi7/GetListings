@@ -22,11 +22,11 @@ class GmapSpider(scrapy.Spider):
         # self.driver = uc.Chrome(options=options, headless=False)
 
         options = webdriver.ChromeOptions()
-        prefs = {"intl.accept_languages": "fr,fr_FR"}
-        options.add_argument('--user-data-dir=chrome-profile') 
-        options.add_argument('--lang=fr')
-        options.add_experimental_option("prefs", prefs)
-        options.add_experimental_option('prefs', {'intl.accept_languages': 'fr,fr_FR'})
+        # prefs = {"intl.accept_languages": "fr,fr_FR"}
+        # options.add_argument('--user-data-dir=chrome-profile') 
+        # options.add_argument('--lang=fr')
+        # options.add_experimental_option("prefs", prefs)
+        # options.add_experimental_option('prefs', {'intl.accept_languages': 'fr,fr_FR'})
         self.driver = webdriver.Chrome(ChromeDriverManager().install())
 
 
@@ -35,24 +35,22 @@ class GmapSpider(scrapy.Spider):
         # Get the initial number of results
         old_results_count = len(self.driver.find_elements(By.XPATH, '//div[contains(@class, "fontHeadlineSmall")]'))
         
-        # while True:
-        #     # Scroll to the bottom
-        #     results_container = self.driver.find_element(By.CSS_SELECTOR, 'div.m6QErb.WNBkOb[role="main"]')
-        #     ActionChains(self.driver).move_to_element(results_container).send_keys(Keys.END).perform()
-        #     time.sleep(2)
+        while True:
+            # Scroll to the bottom
+            results_container = self.driver.find_element(By.CSS_SELECTOR, 'div.m6QErb.WNBkOb[role="main"]')
+            ActionChains(self.driver).move_to_element(results_container).send_keys(Keys.END).perform()
+            time.sleep(2)
 
-        #     # Get the updated number of results
-        #     new_results_count = len(self.driver.find_elements(By.XPATH, '//div[contains(@class, "fontHeadlineSmall")]'))
+            # Get the updated number of results
+            new_results_count = len(self.driver.find_elements(By.XPATH, '//div[contains(@class, "fontHeadlineSmall")]'))
 
-        #     # Break the loop if no new results are loaded
-        #     if new_results_count == old_results_count:
-        #         break
+            # Break the loop if no new results are loaded
+            if new_results_count == old_results_count:
+                break
 
-        #     # Update the old results count
-        #     old_results_count = new_results_count
+            # Update the old results count
+            old_results_count = new_results_count
 
-        # links = self.driver.find_elements(By.CSS_SELECTOR, 'a.hfpxzc').get_attribute("href")
-        # nLinks = [link for link in links]
         nLinks = [link.get_attribute("href") for link in self.driver.find_elements(By.CSS_SELECTOR, 'a.hfpxzc')]
 
         yield from response.follow_all (nLinks, callback=self.parse_final)

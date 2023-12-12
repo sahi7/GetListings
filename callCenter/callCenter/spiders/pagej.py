@@ -49,23 +49,17 @@ class PagejSpider(scrapy.Spider):
 
         self.run_stealth()
 
-    def save_state(self, filename="selenium_state.pkl"):
-        state = {
-            "url": driver.current_url,
-            "cookies": driver.get_cookies(),
-            # Add more relevant information to save
-        }
+    def save_state(self, state, filename):
         with open(filename, "wb") as f:
             pickle.dump(state, f)
 
-    def load_state(self, filename="selenium_state.pkl"):
-        if os.path.exists(filename):
-            with open(filename, "rb") as f:
-                state = pickle.load(f)
-
-            self.driver.get(state["url"])
-            for cookie in state["cookies"]:
-                self.driver.add_cookie(cookie)
+    def load_state(self, filename):
+        try:
+            if os.path.exists(filename):
+                with open(filename, "rb") as f:
+                    state = pickle.load(f)
+        except FileNotFoundError:
+            return None
 
     def run_stealth(self):
         service = ChromeService(executable_path=ChromeDriverManager().install()) # create a new Service instance and specify path to Chromedriver executable
@@ -107,10 +101,15 @@ class PagejSpider(scrapy.Spider):
     def parse(self, response, next_page=None):
         print('🕸️  Parsing')
         if next_page is None: 
-            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=creche&ou=Ile-de-France&idOu=R11&page=187&contexte=sBof0Z7OI026/jhfe3maxLga7/M08GezCNEYQp5nLUJ/nUVSjldDcc%2BZ%2BLCDliVvZmrl/ViyobEUJMSYceb1dqLd19isAPXPVUXYegX6%2BgDupOcmnLQPMnFC%2BIiWME6XiX2ce/0ignEkVDH6%2BbnOjnQ0GhInLt1NZ6B2kWKggOvMeG3tpUaP4F6j6wvVrdWBTGXcy0MG66WChRYyh5w3lSBhiSmUThB/KPteWrB4MjI5l0HjMAPRhLVLZpr56alCiQcjhimTVYUQks3XbqSWEYiNcJRnKlOXgMNR0q21hgjqSUPDu3QfsPWgXyKLFDkP0XjgtkBT6yhYdTK3QYH5EpcLprx2/FwQ9tB64TvxpOF1bLOH1rRIVueZ2hUFziPauhhzEHuJ/QeHG5QduaGx%2BC8wrM8X7V1Pq%2BenB/h6lca/Lr2s/qks4Z1ltFe6ordUywWLN3FiktZAounjLBhLt15PrL8dK4NEP0SNJb3WvDg0TMeq0960dIb6woGO5vCAazmywEmWXJ2lOMY77R0F9hqEHDHj0B1rrCFlIe6FVL%2BwH42NN%2BzEzz74E8pgvESKNJEdlG5S%2BZTa6TMor6gnY7yxfRdaWXPoBIs9AneVCIH508VboZeYKqIxYh8s0q5Y%2BsYzYDdgHNuPsUM6s2AIER3PR6utSgzoinyk0qujv1hHGwcC7AIdB4ESM/YFUGWBB3MXOBc%2BvrOLM8oU/dt/cSTQs3wMu3%2B1WL4NPdDqrYaByVTrrUoF4whdgeRITUvINp/EK5O4gtG3qQtRL/bit7vkuWcYmo4M2ey3YZ0jxJZneLc3g4qvihUYC/aaokU4JH9v8L1tIWv1rHAEgzJkN7ZOsBDIDdWV37QKkgzibTtWGzDyOx%2BdLnRkV3SKJOW9vg0HYPsKlsic18%2BbclKodUISFZjwr7J/yArqTlfoPn2l1Zt5VwukIXbjUHkoKZExGcuUwh0hJU8EOtzebVb4rIazmBIDbim8cGNLKkQqLtR6MsJCy5YRMvRMq0u6PpwSQupdS/Kso2h36QG6PVKVfUbx%2ByCVI5GKXPirU4xuM8XSYuX%2B0Yyo/DcasBbV/xE4RajD6z9ngZQ38lCujji6hhkvqsbJzs/gFZ4Q%2BQhR5UEgvBjx/f6wT4L03qx/BwJumjmxXEBY4unJr2fzVHkXLMrUjGqpg77LFV0GxJfGAofvoPjrWMrF3QyOpxrhfG0dX5ElNdRbyr0AMrmzc9C10aPLoGeTgeAeTfw6dKrOh18%3D&quoiQuiInterprete=creche")
+            state = self.load_state(self.output_filename)
+            if state is None:
+                self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=creche&ou=Ile-de-France&idOu=R11&page=187&contexte=sBof0Z7OI026/jhfe3maxLga7/M08GezCNEYQp5nLUJ/nUVSjldDcc%2BZ%2BLCDliVvZmrl/ViyobEUJMSYceb1dqLd19isAPXPVUXYegX6%2BgDupOcmnLQPMnFC%2BIiWME6XiX2ce/0ignEkVDH6%2BbnOjnQ0GhInLt1NZ6B2kWKggOvMeG3tpUaP4F6j6wvVrdWBTGXcy0MG66WChRYyh5w3lSBhiSmUThB/KPteWrB4MjI5l0HjMAPRhLVLZpr56alCiQcjhimTVYUQks3XbqSWEYiNcJRnKlOXgMNR0q21hgjqSUPDu3QfsPWgXyKLFDkP0XjgtkBT6yhYdTK3QYH5EpcLprx2/FwQ9tB64TvxpOF1bLOH1rRIVueZ2hUFziPauhhzEHuJ/QeHG5QduaGx%2BC8wrM8X7V1Pq%2BenB/h6lca/Lr2s/qks4Z1ltFe6ordUywWLN3FiktZAounjLBhLt15PrL8dK4NEP0SNJb3WvDg0TMeq0960dIb6woGO5vCAazmywEmWXJ2lOMY77R0F9hqEHDHj0B1rrCFlIe6FVL%2BwH42NN%2BzEzz74E8pgvESKNJEdlG5S%2BZTa6TMor6gnY7yxfRdaWXPoBIs9AneVCIH508VboZeYKqIxYh8s0q5Y%2BsYzYDdgHNuPsUM6s2AIER3PR6utSgzoinyk0qujv1hHGwcC7AIdB4ESM/YFUGWBB3MXOBc%2BvrOLM8oU/dt/cSTQs3wMu3%2B1WL4NPdDqrYaByVTrrUoF4whdgeRITUvINp/EK5O4gtG3qQtRL/bit7vkuWcYmo4M2ey3YZ0jxJZneLc3g4qvihUYC/aaokU4JH9v8L1tIWv1rHAEgzJkN7ZOsBDIDdWV37QKkgzibTtWGzDyOx%2BdLnRkV3SKJOW9vg0HYPsKlsic18%2BbclKodUISFZjwr7J/yArqTlfoPn2l1Zt5VwukIXbjUHkoKZExGcuUwh0hJU8EOtzebVb4rIazmBIDbim8cGNLKkQqLtR6MsJCy5YRMvRMq0u6PpwSQupdS/Kso2h36QG6PVKVfUbx%2ByCVI5GKXPirU4xuM8XSYuX%2B0Yyo/DcasBbV/xE4RajD6z9ngZQ38lCujji6hhkvqsbJzs/gFZ4Q%2BQhR5UEgvBjx/f6wT4L03qx/BwJumjmxXEBY4unJr2fzVHkXLMrUjGqpg77LFV0GxJfGAofvoPjrWMrF3QyOpxrhfG0dX5ElNdRbyr0AMrmzc9C10aPLoGeTgeAeTfw6dKrOh18%3D&quoiQuiInterprete=creche")
+            else:
+                self.driver.get(state["url"])
+                for cookie in state["cookies"]:
+                    self.driver.add_cookie(cookie)
         else:
             self.driver.quit()
-            self.save_state(self.output_filename)
             time.sleep(random.randint(2, 5))
             self.run_stealth()
             print('Getting Next page')
@@ -144,7 +143,12 @@ class PagejSpider(scrapy.Spider):
                     time.sleep(random.uniform(0.6, 1.5))
                     yield from self.scrape_content(html_response)
         except:
-            self.save_state(self.output_filename)
+            # self.save_state(self.output_filename)
+            self.save_state({
+                "url": self.driver.current_url,
+                "cookies": self.driver.get_cookies(),
+                }, self.output_filename
+            )        
 
         print(self.driver.execute_script("return navigator.userAgent;"))
         time.sleep(random.uniform(0.6, 1.5))

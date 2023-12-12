@@ -41,6 +41,7 @@ class PagejSpider(scrapy.Spider):
         print('🚀  Starting the engine...')
 
         if hasattr(sys, 'argv') and '-o' in sys.argv:
+            # Normally, arguments are rep with -a, using -o for hasattr may not be acceptable. There is margin for error here
             output_index = sys.argv.index('-o')
             self.output_filename = sys.argv[output_index + 1] if output_index + 1 < len(sys.argv) else "selenium_state.pkl"
         else:

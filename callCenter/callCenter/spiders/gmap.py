@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 from scrapy.http import HtmlResponse
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
-# import undetected_chromedriver as uc
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -18,15 +17,8 @@ class GmapSpider(scrapy.Spider):
     def __init__(self, *args, **kwargs):
         super(GmapSpider, self).__init__(*args, **kwargs)
 
-        # options = uc.ChromeOptions()
-        # self.driver = uc.Chrome(options=options, headless=False)
-
         options = webdriver.ChromeOptions()
-        # prefs = {"intl.accept_languages": "fr,fr_FR"}
-        # options.add_argument('--user-data-dir=chrome-profile') 
-        # options.add_argument('--lang=fr')
-        # options.add_experimental_option("prefs", prefs)
-        # options.add_experimental_option('prefs', {'intl.accept_languages': 'fr,fr_FR'})
+        # options.add_argument('--headless')
         self.driver = webdriver.Chrome(ChromeDriverManager().install())
 
 

@@ -1,12 +1,10 @@
-import scrapy, time, re
+import scrapy, time
 from bs4 import BeautifulSoup
-from scrapy.http import HtmlResponse
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
 
 
 class GmapSpider(scrapy.Spider):
@@ -17,40 +15,38 @@ class GmapSpider(scrapy.Spider):
     def __init__(self, *args, **kwargs):
         super(GmapSpider, self).__init__(*args, **kwargs)
 
-        options = webdriver.ChromeOptions()
-        # options.add_argument('--headless')
-        self.driver = webdriver.Chrome(ChromeDriverManager().install())
-
+        chrome = webdriver.ChromeOptions()
+        chrome.add_argument('--headless')
+        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome)
 
     def parse(self, response):
         self.driver.get(response.url)
         # Get the initial number of results
-        old_results_count = len(self.driver.find_elements(By.XPATH, '//div[contains(@class, "fontHeadlineSmall")]'))
-        
-        while True:
-            # Scroll to the bottom
-            results_container = self.driver.find_element(By.CSS_SELECTOR, 'div.m6QErb.WNBkOb[role="main"]')
-            ActionChains(self.driver).move_to_element(results_container).send_keys(Keys.END).perform()
-            time.sleep(2)
+        # desired_text = self.driver.find_element(By.CSS_SELECTOR, 'div.m6QErb.WNBkOb[role="main"] [aria-label]').get_attribute('aria-label').split('Résultats pour ')[1].strip('"')
+        desired_text = self.driver.find_element(By.CSS_SELECTOR, 'div.m6QErb.WNBkOb[role="main"] [aria-label]').get_attribute('aria-label')
+        divSideBar = self.driver.find_element(By.CSS_SELECTOR,f"div[aria-label='{desired_text}']")
 
-            # Get the updated number of results
-            new_results_count = len(self.driver.find_elements(By.XPATH, '//div[contains(@class, "fontHeadlineSmall")]'))
-
-            # Break the loop if no new results are loaded
-            if new_results_count == old_results_count:
-                break
-
-            # Update the old results count
-            old_results_count = new_results_count
+        keepScrolling=True
+        print('💫  Entering scrollbar')
+        while(keepScrolling):
+            divSideBar.send_keys(Keys.PAGE_DOWN)
+            time.sleep(0.5)
+            divSideBar.send_keys(Keys.PAGE_DOWN)
+            time.sleep(0.5)
+            html = self.driver.find_element(By.TAG_NAME, "html").get_attribute('outerHTML')
+            if(html.find("Vous êtes arrivé à la fin de la liste.")!=-1):
+                print('📜  Scrolling complete')
+                keepScrolling=False
 
         nLinks = [link.get_attribute("href") for link in self.driver.find_elements(By.CSS_SELECTOR, 'a.hfpxzc')]
+        print(len(nLinks), ' Results')
 
         yield from response.follow_all (nLinks, callback=self.parse_final)
 
         
     def parse_final(self, response):
         self.driver.get(response.url)
-        print('Processing: ', response.url)
+        print('🕸️  Processing: ', response.url)
         html_content  = self.driver.page_source
         soup = BeautifulSoup(html_content, 'html.parser')
 
@@ -72,5 +68,5 @@ class GmapSpider(scrapy.Spider):
             if not value:
                 data[key] = ''
 
-        print(data)
+        yield(data)
             

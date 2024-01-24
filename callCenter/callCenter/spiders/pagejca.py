@@ -6,12 +6,13 @@ from bs4 import BeautifulSoup
 class PagejcaSpider(scrapy.Spider):
     name = "pagejca"
     allowed_domains = ["www.pagesjaunes.ca"]
-    start_urls = ["https://www.pagesjaunes.ca/search/si/1/Magasin+de+vêtements/Ile+De+Montreal+-+Centre+QC"]
-    max_pages = 74
+    start_urls = ["https://www.pagesjaunes.ca/search/si/1/Studio+Photo/Abitibi-Temiscamingue+QC"]
+    ville = "Abitibi-Temiscamingue+QC"
+    max_pages = 1
 
     def start_requests(self):
         for page_number in range(1, self.max_pages + 1):
-            url = f'https://www.pagesjaunes.ca/search/si/{page_number}/Magasin+de+vêtements/Ile+De+Montreal+-+Centre+QC'
+            url = f'https://www.pagesjaunes.ca/search/si/{page_number}/Studio+Photo/Abitibi-Temiscamingue+QC'
             yield scrapy.Request(url=url, meta={'page_number': page_number}, callback=self.parse)
 
     def parse(self, response):
@@ -53,7 +54,7 @@ class PagejcaSpider(scrapy.Spider):
                     'Postal Code': postal_code,
                     'Website': redirected_url,
                     'Telephone': tel,
-                    'Ville': "Ile De Montreal - Centre QC"
+                    'Ville': self.ville
                 }
             yield data
 

@@ -1,4 +1,4 @@
-import re, os, sys
+import re
 import time
 import scrapy
 import random
@@ -11,20 +11,16 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from rules.actions import Actions
-
 #Selenium stealth -- https://www.zenrows.com/blog/selenium-stealth#scrape-with-stealth
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager #https://pypi.org/project/webdriver-manager/
 from selenium_stealth import stealth
-
-
 class PagejSpider(scrapy.Spider):
     name = "pagej"
     allowed_domains = ["google.com"]
     start_urls = ["https://www.google.com/"]
     base_url = "https://www.pagesjaunes.fr"
     old_url = ""
-
     user_agents = [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/118.0.2088.88',
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/108.0.0.0 Safari/537.36',
@@ -33,37 +29,12 @@ class PagejSpider(scrapy.Spider):
             'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
         ]
     user_agent = random.choice(user_agents)
-
-
     def __init__(self, *args, **kwargs):
         super(PagejSpider, self).__init__(*args, **kwargs)
-
         print('🚀  Starting the engine...')
-
-        if hasattr(sys, 'argv') and '-o' in sys.argv:
-            # Normally, arguments are rep with -a, using -o for hasattr may not be acceptable. There is margin for error here
-            output_index = sys.argv.index('-o')
-            self.output_filename = sys.argv[output_index + 1] if output_index + 1 < len(sys.argv) else "selenium_state.pkl"
-        else:
-            self.output_filename = "selenium_state.pkl"
-
         self.run_stealth()
-
-    def save_state(self, state, filename):
-        with open(filename, "wb") as f:
-            pickle.dump(state, f)
-
-    def load_state(self, filename):
-        try:
-            if os.path.exists(filename):
-                with open(filename, "rb") as f:
-                    state = pickle.load(f)
-        except FileNotFoundError:
-            return None
-
     def run_stealth(self):
         service = ChromeService(executable_path=ChromeDriverManager().install()) # create a new Service instance and specify path to Chromedriver executable
-
         # options = uc.ChromeOptions()
         options = webdriver.ChromeOptions()
         options.add_argument("--headless")
@@ -77,7 +48,6 @@ class PagejSpider(scrapy.Spider):
         options.add_experimental_option("excludeSwitches", ["enable-automation"])
         options.add_experimental_option('useAutomationExtension', False)
         options.add_experimental_option('excludeSwitches', ['enable-logging'])
-
         
         self.driver = webdriver.Chrome(service=service, options=options) #driver instance
         self.driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})") # Change the property value of the navigator for webdriver to undefined
@@ -101,13 +71,7 @@ class PagejSpider(scrapy.Spider):
     def parse(self, response, next_page=None):
         print('🕸️  Parsing')
         if next_page is None: 
-            state = self.load_state(self.output_filename)
-            if state is None:
-                self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=creche&ou=Ile-de-France&idOu=R11&page=187&contexte=sBof0Z7OI026/jhfe3maxLga7/M08GezCNEYQp5nLUJ/nUVSjldDcc%2BZ%2BLCDliVvZmrl/ViyobEUJMSYceb1dqLd19isAPXPVUXYegX6%2BgDupOcmnLQPMnFC%2BIiWME6XiX2ce/0ignEkVDH6%2BbnOjnQ0GhInLt1NZ6B2kWKggOvMeG3tpUaP4F6j6wvVrdWBTGXcy0MG66WChRYyh5w3lSBhiSmUThB/KPteWrB4MjI5l0HjMAPRhLVLZpr56alCiQcjhimTVYUQks3XbqSWEYiNcJRnKlOXgMNR0q21hgjqSUPDu3QfsPWgXyKLFDkP0XjgtkBT6yhYdTK3QYH5EpcLprx2/FwQ9tB64TvxpOF1bLOH1rRIVueZ2hUFziPauhhzEHuJ/QeHG5QduaGx%2BC8wrM8X7V1Pq%2BenB/h6lca/Lr2s/qks4Z1ltFe6ordUywWLN3FiktZAounjLBhLt15PrL8dK4NEP0SNJb3WvDg0TMeq0960dIb6woGO5vCAazmywEmWXJ2lOMY77R0F9hqEHDHj0B1rrCFlIe6FVL%2BwH42NN%2BzEzz74E8pgvESKNJEdlG5S%2BZTa6TMor6gnY7yxfRdaWXPoBIs9AneVCIH508VboZeYKqIxYh8s0q5Y%2BsYzYDdgHNuPsUM6s2AIER3PR6utSgzoinyk0qujv1hHGwcC7AIdB4ESM/YFUGWBB3MXOBc%2BvrOLM8oU/dt/cSTQs3wMu3%2B1WL4NPdDqrYaByVTrrUoF4whdgeRITUvINp/EK5O4gtG3qQtRL/bit7vkuWcYmo4M2ey3YZ0jxJZneLc3g4qvihUYC/aaokU4JH9v8L1tIWv1rHAEgzJkN7ZOsBDIDdWV37QKkgzibTtWGzDyOx%2BdLnRkV3SKJOW9vg0HYPsKlsic18%2BbclKodUISFZjwr7J/yArqTlfoPn2l1Zt5VwukIXbjUHkoKZExGcuUwh0hJU8EOtzebVb4rIazmBIDbim8cGNLKkQqLtR6MsJCy5YRMvRMq0u6PpwSQupdS/Kso2h36QG6PVKVfUbx%2ByCVI5GKXPirU4xuM8XSYuX%2B0Yyo/DcasBbV/xE4RajD6z9ngZQ38lCujji6hhkvqsbJzs/gFZ4Q%2BQhR5UEgvBjx/f6wT4L03qx/BwJumjmxXEBY4unJr2fzVHkXLMrUjGqpg77LFV0GxJfGAofvoPjrWMrF3QyOpxrhfG0dX5ElNdRbyr0AMrmzc9C10aPLoGeTgeAeTfw6dKrOh18%3D&quoiQuiInterprete=creche")
-            else:
-                self.driver.get(state["url"])
-                for cookie in state["cookies"]:
-                    self.driver.add_cookie(cookie)
+            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=entreprise%20nettoyage&ou=Hauts-de-France&idOu=R32&page=74&contexte=DMWZAp1v6O7Qq%2BT2FQc30l3jzN%2B8WKmSr0JLwXv5290hzih1uvss%2BROWsnqQx4hzyROmoqaOUVUNX9UYI4XpiDcl1epXc8AYVR4iCtTHQNR2z9sSLFhPl2OozAGQWZGtaUIW4rr5ddf%2BNpr6Yo5W%2B86uU3w3Wd2TTsUxNt6%2BdqN2c5I9BQyQep1gVlzjLC2aHxFjlGomvo0MzAPraKcL1ioJrAq7%2BFsoDWsxRnOFsHY6F0aBD1Ca2Fgu%2BkjjTg9j3J57SzeYj/rHA3ES/fQWTPBZcK/wwyTtdVL36VElpdqXUi9/eDRqxPtTV6bXt8R0Y/ZE/GrA2%2BYgFH%2Bmy%2Bz0qdeNu/l6eD0Y1IJnFwgaeCTl3tphNN8w9HgFsNA9vY6uc9ZWPtjmXmYCu3BBq9s15rXyXcDLCgdGlcOS7FvR5alLdLaPJLr7BycK76BfShNtVDXRPi43muZat7EQyiN3Dw8QXo1Y4GJeLXgYO/fFhkfcvvSQ38zKqm3JpthCS6HeIAW8IzVUntW1JX9kJqk4qg%3D%3D&quoiQuiInterprete=entreprise%20nettoyage")
         else:
             self.driver.quit()
             time.sleep(random.randint(2, 5))
@@ -116,45 +80,31 @@ class PagejSpider(scrapy.Spider):
             self.driver.get(next_page)
         self.driver.save_screenshot("opensea.png")
         time.sleep(random.randint(2, 5))
-        try:
-            self.old_url = self.driver.current_url
-            website = self.driver.page_source
-            results = BeautifulSoup(website, 'html.parser')
-
-            hotel_links = results.select('.bi-content a[href*="pros/"]')
-            # hotel_links = results.select('.results a[href*="pros/"]')
-            if hotel_links:
-                print('Len of Hotel Links: ', len(hotel_links))
-                for link in hotel_links:
-                    # link.find("a",{"class":"bi-denomination"}).get('href')
-                    href = link.get('href')
-                    target_url = self.base_url + href
-                    print(target_url)
-                    time.sleep(random.randint(2, 5))
-                    self.driver.get(target_url)
-                    time.sleep(random.randint(5, 15))
-
-                    html_content  = self.driver.page_source
-                    html_response = HtmlResponse(self.driver.current_url, body=html_content, encoding='utf-8')
-
-                    scroll_port = random.randint(300, 800)
-                    Actions.scroll_page('down', scroll_port)
-
-                    time.sleep(random.uniform(0.6, 1.5))
-                    yield from self.scrape_content(html_response)
-        except:
-            # self.save_state(self.output_filename)
-            self.save_state({
-                "url": self.driver.current_url,
-                "cookies": self.driver.get_cookies(),
-                }, self.output_filename
-            )        
-
+        self.old_url = self.driver.current_url
+        website = self.driver.page_source
+        results = BeautifulSoup(website, 'html.parser')
+        hotel_links = results.select('.bi-content a[href*="pros/"]')
+        # hotel_links = results.select('.results a[href*="pros/"]')
+        if hotel_links:
+            print('Len of Hotel Links: ', len(hotel_links))
+            for link in hotel_links:
+                # link.find("a",{"class":"bi-denomination"}).get('href')
+                href = link.get('href')
+                target_url = self.base_url + href
+                print(target_url)
+                time.sleep(random.randint(2, 5))
+                self.driver.get(target_url)
+                time.sleep(random.randint(5, 15))
+                html_content  = self.driver.page_source
+                html_response = HtmlResponse(self.driver.current_url, body=html_content, encoding='utf-8')
+                scroll_port = random.randint(300, 800)
+                Actions.scroll_page('down', scroll_port)
+                time.sleep(random.uniform(0.6, 1.5))
+                yield from self.scrape_content(html_response)
         print(self.driver.execute_script("return navigator.userAgent;"))
         time.sleep(random.uniform(0.6, 1.5))
         self.driver.get(self.old_url)
         time.sleep(random.uniform(0.5, 2.5))
-
         # Check for Pagination
         while True:
             try:
@@ -168,7 +118,6 @@ class PagejSpider(scrapy.Spider):
                 next_page_link = self.driver.find_element(By.CSS_SELECTOR, "a#pagination-next")
             except NoSuchElementException:
                 print('NO NEXT PAGE FOUND')
-
             try:
                 popup = self.driver.find_element(By.ID, 'didomi-notice-agree-button')
                 time.sleep(random.uniform(0.5, 1.5))
@@ -193,24 +142,21 @@ class PagejSpider(scrapy.Spider):
                 current_url = self.driver.current_url  
                 print('Current URL', current_url)
                 yield from self.parse(response, current_url)
-
             else:
                 break
-
-
     def scrape_content(self, response_data):
         results = BeautifulSoup(response_data.body, 'html.parser')
-
         try:
-            name = results.find("h1",{"class":"noTrad"}).text
+            name = results.find("h1",{"class":"noTrad"}).text.strip()
+            split_name = name.split('\n', 1)  # Split at the first '\n'
+            result_name = split_name[0].strip()
         except:
             name = ''
-
         postal_code = ""
         try:
             address_element = results.select_one('.address-container span.noTrad')
             if address_element:
-                address = address_element.text
+                address = address_element.text.strip()
                 # Extract postal code if available
                 if address:
                     # Use a regular expression to find a postal code pattern (5 digits)
@@ -221,35 +167,29 @@ class PagejSpider(scrapy.Spider):
                 address = ''
         except:
             address = ''
-
         try:
             website = results.select_one('.lvs-container span.value').text
         except:
             website = ''
-
         try:
             tel = results.find("span",{"class":"coord-numero"}).text
         except:
             tel = ''
-
         try:
             stars = results.find("span",{"class":"categorie-libelle"}).text
         except:
             stars = ''
-
         try:
             tariffs = results.select('#tarif-hotel span.prix')
             tariff_texts = [tariff.get_text() for tariff in tariffs]
-
             # Join the extracted texts with a comma
             all_tariffs = ', '.join(tariff_texts)
         except:
             all_tariffs = ""
-
         
         # Yield the scraped results
-        yield {
-            'Name': name,
+        data = {
+            'Name': result_name,
             'Address': address,
             'Postal Code': postal_code,
             'Website': website,
@@ -257,3 +197,5 @@ class PagejSpider(scrapy.Spider):
             # 'Stars': stars,
             # 'Tariffs': all_tariffs
         }
+        yield data
+         

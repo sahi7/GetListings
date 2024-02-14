@@ -101,3 +101,17 @@ class CallcenterDownloaderMiddleware:
 
     def spider_opened(self, spider):
         spider.logger.info("Spider opened: %s" % spider.name)
+        
+
+import base64
+
+# Start your middleware class
+class ProxyMiddleware(object):
+    # overwrite process request
+    DOMAIN = 'http://p.webshare.io'
+    PORT = '80'
+    USERNAME = 'uejrfjme-rotate'
+    PASSWORD = 'dytwnfpy5elt'
+    def process_request(self, request, spider):
+        # Set the location of the proxy
+        request.meta['proxy'] = f'{self.USERNAME}:{self.PASSWORD}@{self.DOMAIN}:{self.PORT}'

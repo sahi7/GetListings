@@ -108,10 +108,13 @@ import base64
 # Start your middleware class
 class ProxyMiddleware(object):
     # overwrite process request
-    DOMAIN = 'http://p.webshare.io'
+    ENDPOINT = 'http://p.webshare.io'
     PORT = '80'
     USERNAME = 'uejrfjme-rotate'
     PASSWORD = 'dytwnfpy5elt'
     def process_request(self, request, spider):
         # Set the location of the proxy
-        request.meta['proxy'] = f'{self.USERNAME}:{self.PASSWORD}@{self.DOMAIN}:{self.PORT}'
+        user_credentials = f'{self.USERNAME}:{self.PASSWORD}'
+        basic_authentication = 'Basic ' + base64.b64encode(user_credentials.encode()).decode()
+        request.meta['proxy'] = f'{self.ENDPOINT}:{self.PORT}'
+        request.headers['Proxy-Authorization'] = basic_authentication

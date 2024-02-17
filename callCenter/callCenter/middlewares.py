@@ -2,11 +2,14 @@
 #
 # See documentation in:
 # https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+import os
 
 from scrapy import signals
 
 # useful for handling different item types with a single interface
 from itemadapter import is_item, ItemAdapter
+
+from dotenv import load_dotenv
 
 
 class CallcenterSpiderMiddleware:
@@ -108,13 +111,14 @@ import base64
 # Start your middleware class
 class ProxyMiddleware(object):
     # overwrite process request
-    ENDPOINT = 'http://p.webshare.io'
-    PORT = '80'
-    USERNAME = 'uejrfjme-rotate'
-    PASSWORD = 'dytwnfpy5elt'
+    load_dotenv()
+    PROXY_ENDPOINT = os.getenv('PROXY_ENDPOINT')
+    PROXY_PORT = os.getenv('PROXY_PORT')
+    PROXY_USERNAME = os.getenv('PROXY_USERNAME')
+    PROXY_PASSWORD = os.getenv('PROXY_PASSWORD')
     def process_request(self, request, spider):
         # Set the location of the proxy
-        user_credentials = f'{self.USERNAME}:{self.PASSWORD}'
+        user_credentials = f'{self.PROXY_USERNAME}:{self.PROXY_PASSWORD}'
         basic_authentication = 'Basic ' + base64.b64encode(user_credentials.encode()).decode()
-        request.meta['proxy'] = f'{self.ENDPOINT}:{self.PORT}'
+        request.meta['proxy'] = f'{self.PROXY_ENDPOINT}:{self.PROXY_PORT}'
         request.headers['Proxy-Authorization'] = basic_authentication

@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from fake_useragent import UserAgent
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
 
 
 class FiverrSpider(scrapy.Spider):
@@ -51,11 +52,17 @@ class FiverrSpider(scrapy.Spider):
         options = webdriver.ChromeOptions()
         # options.add_argument('--headless')
 
+        # Initialize SeleniumAuthenticatedProxy
+        proxy_helper = SeleniumAuthenticatedProxy(proxy_url=f'http://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_ENDPOINT}:{PROXY_PORT}')
+        
+        # Enrich Chrome options with proxy authentication
+        proxy_helper.enrich_chrome_options(options)
+
         # options = self.driver.options
-        # options.add_argument(f'--proxy-server=http://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_ENDPOINT}:{PROXY_PORT}')
+        # options.add_argument(f'--proxy-server=http://{PROXY_ENDPOINT}:{PROXY_PORT}')
         options.add_argument(f'user-agent={self.user_agent}')
         options.add_argument(f"--referer={self.Referer}")
-        options.add_argument("--auto-open-devtools-for-tabs")
+        # options.add_argument("--auto-open-devtools-for-tabs")
         self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
 
 
@@ -65,9 +72,7 @@ class FiverrSpider(scrapy.Spider):
         # Get IP address using JavaScript
         self.driver.execute_script("window.open('https://api.ipify.org/')")
         self.driver.switch_to.window(self.driver.window_handles[1])
-        time.sleep(2)
         ip_page_source = self.driver.execute_script("return document.body.textContent")
-        time.sleep(2)
         self.driver.switch_to.window(self.driver.window_handles[0])
         # Get the initial headers
         public_ip = requests.get('https://api.ipify.org').text

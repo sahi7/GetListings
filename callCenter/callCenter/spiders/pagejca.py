@@ -56,6 +56,7 @@ class PagejcaSpider(scrapy.Spider):
                     'Telephone': tel,
                     'Ville': self.ville
                 }
+                
             yield data
 
 

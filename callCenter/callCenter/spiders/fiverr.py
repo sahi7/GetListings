@@ -6,6 +6,9 @@ from fake_useragent import UserAgent
 from selenium import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 from selenium_authenticated_proxy import SeleniumAuthenticatedProxy
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 
 class FiverrSpider(scrapy.Spider):
@@ -80,6 +83,34 @@ class FiverrSpider(scrapy.Spider):
         response_status = self.driver.execute_script("return document.readyState")
         current_url = self.driver.current_url
         referer_status = self.driver.execute_script("return document.referrer")
+
+        # Work starts 
+        wait_time = random.uniform(1.5, 7.5)
+        scroll_amount = random.randint(50, 100)
+        actions = ActionChains(self.driver)
+        elements = self.driver.find_elements(By.CSS_SELECTOR, "#Services .gig-card-layout")
+
+        for element in elements:
+            random_x = random.randint(-50, 50)
+            random_y = random.randint(-50, 50)
+            actions.move_to_element_with_offset(element, random.randint(2, 12), random.randint(0, 9))
+            actions.move_by_offset(0, scroll_amount)
+            time.sleep(random.uniform(0.2, 0.5))
+            actions.move_by_offset(0, -scroll_amount)
+            time.sleep(random.uniform(0.2, 0.5))
+
+            actions.send_keys(Keys.ARROW_DOWN)
+            actions.send_keys(Keys.ARROW_UP)
+
+            # Click on the element
+            actions.click()
+
+            # Perform all actions
+            actions.perform()
+
+            # Randomize mouse movements
+            actions.move_by_offset(random_x, random_y)
+
 
         yield {
             'url': current_url,

@@ -20,9 +20,9 @@ from rules.actions import Actions
 
 class Pagej2Spider(scrapy.Spider):
     name = "pagej2"
-    allowed_domains = ["www.pagesjaunes.fr"]
-    start_urls = ["https://www.pagesjaunes.fr/"]
-    base_url = "https://www.pagesjaunes.fr//chercherlespros?quoiqui=confiserie%20chocolaterie&ou=Auvergne-Rh%C3%B4ne-Alpes&idOu=R84&page={}"
+    allowed_domains = ["google.com"]
+    start_urls = ["https://www.google.com/"]
+    base_url = "https://www.pagesjaunes.fr/chercherlespros?quoiqui=confiserie%20chocolaterie&ou=Auvergne-Rh%C3%B4ne-Alpes&idOu=R84&page={}"
     num_pages = 27
     user_agents = [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/118.0.2088.88',
@@ -30,16 +30,18 @@ class Pagej2Spider(scrapy.Spider):
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Vivaldi/6.4.3160.41',
             'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-        ]
+        ]       
+
     def __init__(self, *args, **kwargs):
         super(Pagej2Spider, self).__init__(*args, **kwargs)
         print('🚀  Starting the engine...')
         self.run_stealth()
+
     def run_stealth(self):
         service = ChromeService(executable_path=ChromeDriverManager().install()) # create a new Service instance and specify path to Chromedriver executable
         # options = uc.ChromeOptions()
         options = webdriver.ChromeOptions()
-        # options.add_argument("--headless")
+        options.add_argument("--headless")
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--disable-extensions') # disable extensions
         options.add_argument('--no-sandbox') # disable sandbox mode
@@ -64,8 +66,10 @@ class Pagej2Spider(scrapy.Spider):
         )
 
     def parse(self, response):
+        self.driver.get(response.url)
+        print('🕸️  Parsing 2')
         try:
-            print('🕸️  Parsing 2')
+            
             for page_num in range(1, self.num_pages + 1):
 
                 url = self.base_url.format(page_num)

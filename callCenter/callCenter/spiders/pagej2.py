@@ -20,8 +20,8 @@ from rules.actions import Actions
 
 class Pagej2Spider(scrapy.Spider):
     name = "pagej2"
-    allowed_domains = ["google.com"]
-    start_urls = ["https://www.google.com/"]
+    allowed_domains = ["google.com"] # Scrapy can't bypass pagej security
+    start_urls = ["https://www.google.com/"] # Use google for easy by pass by scrapy else selenium will not get url
     base_url = "https://www.pagesjaunes.fr/chercherlespros?quoiqui=confiserie%20chocolaterie&ou=Auvergne-Rh%C3%B4ne-Alpes&idOu=R84&page={}"
     num_pages = 27
     user_agents = [

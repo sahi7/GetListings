@@ -1,4 +1,5 @@
 from selenium.webdriver.common.action_chains import ActionChains
+import random
 
 # Define a list of user actions
 actions = [
@@ -23,7 +24,7 @@ class Actions:
         element = self.driver.find_element_by_css_selector(selector)
         element.click()
 
-    def scroll_page(self, direction="down", pixels=300):
+    def scroll_page(self, direction="down", pixels=random.randint(300, 800)):
         if direction == "down":
             self.driver.execute_script(f"window.scrollBy(0, {pixels});")
         elif direction == "up":

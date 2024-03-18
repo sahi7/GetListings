@@ -15,13 +15,14 @@ from rules.actions import Actions
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager #https://pypi.org/project/webdriver-manager/
 from selenium_stealth import stealth
+from rules.actions import Actions
 
 
 class Pagej2Spider(scrapy.Spider):
     name = "pagej2"
     allowed_domains = ["www.pagesjaunes.fr"]
     start_urls = ["https://www.pagesjaunes.fr/"]
-    base_url = "https://wwnnuaire.bt/chercherlespros?quoiqui=confiserie%20chocolaterie&ou=Auvergne-Rh%C3%B4ne-Alpes&idOu=R84&page={}"
+    base_url = "https://www.pagesjaunes.fr//chercherlespros?quoiqui=confiserie%20chocolaterie&ou=Auvergne-Rh%C3%B4ne-Alpes&idOu=R84&page={}"
     num_pages = 27
     user_agents = [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/118.0.2088.88',
@@ -30,7 +31,6 @@ class Pagej2Spider(scrapy.Spider):
             'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Vivaldi/6.4.3160.41',
             'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
         ]
-    user_agent = random.choice(user_agents)
     def __init__(self, *args, **kwargs):
         super(Pagej2Spider, self).__init__(*args, **kwargs)
         print('🚀  Starting the engine...')
@@ -39,7 +39,7 @@ class Pagej2Spider(scrapy.Spider):
         service = ChromeService(executable_path=ChromeDriverManager().install()) # create a new Service instance and specify path to Chromedriver executable
         # options = uc.ChromeOptions()
         options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
+        # options.add_argument("--headless")
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--disable-extensions') # disable extensions
         options.add_argument('--no-sandbox') # disable sandbox mode
@@ -62,19 +62,21 @@ class Pagej2Spider(scrapy.Spider):
             renderer="Intel Iris OpenGL Engine",
             fix_hairline=True,
         )
-    
-    def rotate_proxy_and_user_agent(self):
-        # Set up the driver with the new proxy and user agent
-        proxy = self.proxies[0]
-        options = self.driver.options
-        options.add_argument(f'--proxy-server={proxy}')
-        options.add_argument(f'user-agent={self.user_agent}')
-
 
     def parse(self, response):
-        for page_num in range(1, self.num_pages + 1):
+        try:
+            print('🕸️  Parsing 2')
+            for page_num in range(1, self.num_pages + 1):
 
-            url = self.base_url.format(page_num)
+                url = self.base_url.format(page_num)
+                self.driver.get(url)
+                Actions.scroll_page('down')
+                print(f"Scraped page {page_num}")
+
+                
+
+        except Exception as e:
+            print(f"Error occurred: {str(e)}")
 
     def scrape_content(self, response_data):
         results = BeautifulSoup(response_data.body, 'html.parser')

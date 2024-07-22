@@ -57,10 +57,10 @@ class FiverrSpider(scrapy.Spider):
 
         # Initialize SeleniumAuthenticatedProxy
         # Todo @SeleniumAuthenticatedProxy NOT WORKING
-        proxy_helper = SeleniumAuthenticatedProxy(proxy_url=f'http://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_ENDPOINT}:{PROXY_PORT}')
+        # proxy_helper = SeleniumAuthenticatedProxy(proxy_url=f'http://{PROXY_USERNAME}:{PROXY_PASSWORD}@{PROXY_ENDPOINT}:{PROXY_PORT}')
         
         # Enrich Chrome options with proxy authentication
-        proxy_helper.enrich_chrome_options(options)
+        # proxy_helper.enrich_chrome_options(options)
 
         # options = self.driver.options
         # options.add_argument(f'--proxy-server=http://{PROXY_ENDPOINT}:{PROXY_PORT}')

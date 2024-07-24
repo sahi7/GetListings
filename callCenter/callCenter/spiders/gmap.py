@@ -10,7 +10,7 @@ from selenium.webdriver.common.keys import Keys
 class GmapSpider(scrapy.Spider):
     name = "gmap"
     allowed_domains = ["www.google.com"]
-    start_urls = ["https://www.google.com/maps/search/magasin+de+vetement+montreal/"]
+    start_urls = ["https://www.google.com/maps/search/secondary+schools+%C3%A0+proximit%C3%A9+de+Bassa,+Douala"]
 
     def __init__(self, *args, **kwargs):
         super(GmapSpider, self).__init__(*args, **kwargs)
@@ -55,13 +55,13 @@ class GmapSpider(scrapy.Spider):
         data = {
             'Name': soup.select_one('div.TIHn2 h1.DUwDvf.lfPIob').get_text() if soup.select_one('div.TIHn2 h1.DUwDvf.lfPIob') else '',
             'Address': soup.select_one('[data-item-id*="address"]').get_text() if soup.select_one('[data-item-id*="address"]') else '',
-            'Website': soup.select_one('a[data-item-id="authority"] div.fontBodyMedium').get_text() if soup.select_one('a[data-item-id="authority"] div.fontBodyMedium') else '',
             'Telephone': soup.select_one('button[data-item-id*="phone:tel:"] div.fontBodyMedium').get_text() if soup.select_one('button[data-item-id*="phone:tel:"] div.fontBodyMedium') else '',
-            'Reviews Count': soup.select_one('span[aria-label*="avis"]').get_text() if soup.select_one('span[aria-label*="avis"]') else '',
-            'Average Rating': soup.select_one('div.TIHn2 div.fontBodyMedium.dmRWX span[aria-hidden]').get_text() if soup.select_one('div.TIHn2 div.fontBodyMedium.dmRWX span[aria-hidden]') else '',
-            'Business Website': soup.select_one('a.lcr4fd')['href'] if soup.select_one('a.lcr4fd') else '',
-            'Category': soup.select_one('[jsaction="pane.rating.category"]').get_text() if soup.select_one('[jsaction="pane.rating.category"]') else '',
-            'Description': soup.select_one('div.WeS02d.fontBodyMedium div.PYvSYb').get_text() if soup.select_one('div.WeS02d.fontBodyMedium div.PYvSYb') else ''
+            'Website': soup.select_one('a[data-item-id="authority"] div.fontBodyMedium').get_text() if soup.select_one('a[data-item-id="authority"] div.fontBodyMedium') else '',
+            # 'Reviews Count': soup.select_one('span[aria-label*="avis"]').get_text() if soup.select_one('span[aria-label*="avis"]') else '',
+            # 'Average Rating': soup.select_one('div.TIHn2 div.fontBodyMedium.dmRWX span[aria-hidden]').get_text() if soup.select_one('div.TIHn2 div.fontBodyMedium.dmRWX span[aria-hidden]') else '',
+            # 'Business Website': soup.select_one('a.lcr4fd')['href'] if soup.select_one('a.lcr4fd') else '',
+            # 'Category': soup.select_one('[jsaction="pane.rating.category"]').get_text() if soup.select_one('[jsaction="pane.rating.category"]') else '',
+            # 'Description': soup.select_one('div.WeS02d.fontBodyMedium div.PYvSYb').get_text() if soup.select_one('div.WeS02d.fontBodyMedium div.PYvSYb') else ''
         }
 
         # Handle cases where data is not available by replacing with empty strings

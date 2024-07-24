@@ -15,7 +15,7 @@ class CallcenterPipeline:
 
     def process_item(self, item, spider):
         adapter = ItemAdapter(item)
-        if adapter['Telephone'] in self.existing_tel:
+        if adapter['Name'] in self.existing_tel:
             raise DropItem(f"Duplicate item found: {item!r}")
         else:
             self.existing_tel.add(adapter['Telephone'])

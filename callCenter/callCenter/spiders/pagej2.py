@@ -1,5 +1,20 @@
+import re
+import time
 import scrapy
-
+import random
+from bs4 import BeautifulSoup
+from scrapy.http import HtmlResponse
+from selenium import webdriver
+from selenium.webdriver import ActionChains
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
+from rules.actions import Actions
+#Selenium stealth -- https://www.zenrows.com/blog/selenium-stealth#scrape-with-stealth
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager #https://pypi.org/project/webdriver-manager/
+from selenium_stealth import stealth
 
 class Pagej2Spider(scrapy.Spider):
     name = "pagej2"

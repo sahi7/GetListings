@@ -71,7 +71,7 @@ class PagejSpider(scrapy.Spider):
     def parse(self, response, next_page=None):
         print('🕸️  Parsing')
         if next_page is None: 
-            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=confiserie%20chocolaterie&ou=Auvergne-Rh%C3%B4ne-Alpes&idOu=R84&page=27&contexte=URtUXxYXKPVaBxD8bcbeU0g0%2BqzfqeWdpnMQ/Se9ERqxz4RB632llrOwgUTczExoGsJs1VyKmWI5ZQ3A4TOLRXr%2BO9rHXeu3sLV3uJ5x3f%2BLl3bP16XyIlwAaS7duP8i%2BDTbPMkSxXMGjbxvuwGccWRu7fpZOFTR/8BRn2Sj9XwejyKbZtEK2Yk0WMv2JIPYWIVrksDFbVPEaHK3BCv49/Qm%2BbRmUIJUfe%2B6Y1H7U1L4U2oR0jEh6VFYNQiGEj7l&quoiQuiInterprete=confiserie%20chocolaterie")
+            self.driver.get("https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=confiserie%20chocolaterie&ou=Occitanie&idOu=R76&page=41&contexte=SP/mqsrcWOcgxDVZDs8PGfhTahHSMSHpUVg1CIYSPuU%3D&quoiQuiInterprete=confiserie%20chocolaterie")
         else:
             self.driver.quit()
             time.sleep(random.randint(2, 5))
@@ -108,7 +108,7 @@ class PagejSpider(scrapy.Spider):
         # Check for Pagination
         while True:
             try:
-                wait = WebDriverWait(self.driver, 15)
+                wait = WebDriverWait(self.driver, 55)
                 wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, "a#pagination-next")))
             except:
                 self.driver.refresh()
@@ -151,7 +151,7 @@ class PagejSpider(scrapy.Spider):
             split_name = name.split('\n', 1)  # Split at the first '\n'
             result_name = split_name[0].strip()
         except:
-            name = ''
+            result_name = ''
         postal_code = ""
         try:
             address_element = results.select_one('.address-container span.noTrad')

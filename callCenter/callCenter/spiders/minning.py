@@ -53,15 +53,15 @@ class MinningSpider(scrapy.Spider):
             link = product.find("a").get("href")
             self.productLinks.append(link)
         
-        yield from response.follow_all (
-            self.productLinks,
-            callback=self.parse_children
-        )
+        for link in self.productLinks:
+            yield response.follow(link, callback=self.parse_children)
 
-    def parse_children(self, response):
+    def parse_children(self, response, **kwargs):
         """Getting Product links to extract product single page data"""
         singleProductPage = requests.get(response.url, headers=self.headers).text
         soup = BeautifulSoup(singleProductPage, 'html.parser')
+
+        product_details = {}
 
         # Extracting Product Information from Single product Pages
         try:

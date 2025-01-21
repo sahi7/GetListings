@@ -1,65 +1,45 @@
 import scrapy, time
-import requests
+import requests, re
+import json
 import pandas as pd
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from urllib.parse import urlparse
 
-from selenium import webdriver
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-
-from webdriver_manager.chrome import ChromeDriverManager
-
 
 class MinningSpider(scrapy.Spider):
     name = "minning"
-    allowed_domains = ["google.com"]
+    allowed_domains = ["asicmarketplace.com"]
     start_urls = ["https://asicmarketplace.com/shop/?orderby=date"]
     base_url = "https://www.asicmarketplace.com"
 
     productData = []
-    productLinks = []
 
     def __init__(self, *args, **kwargs):
         super(MinningSpider, self).__init__(*args, **kwargs)
         print('🚀  Starting the engine...')
-        chrome = webdriver.ChromeOptions()
-        chrome.add_argument('--headless')
-        self.driver = webdriver.Chrome(ChromeDriverManager().install(), options=chrome)
-
         self.ua = UserAgent()
         self.headers = {"User-Agent": self.ua.random}
-
-    def click_view_more(self):
-        while True:
-            try:
-                load_more_button = wait.until(EC.element_to_be_clickable((By.ID, "loadMore")))
-                print("Clicking 'View more' button...")
-                driver.execute_script("arguments[0].click();", load_more_button)
-                time.sleep(2)  # Wait for products to load
-            except Exception as e:
-                print("No more 'View more' button or all products loaded.")
-                break
     
-    def parse(self, response):
-        print('🕸️  Parsing')
-        self.driver.get(response.url)
-        self.click_view_more()
+    def parse(self, response, **kwargs):
+        productLinks = []
+        print('📖️  Parsing ' + response.url)
 
-        soup = BeautifulSoup(self.driver.page_source, 'html.parser')
+        soup = BeautifulSoup(response.text, 'html.parser')
         productList = soup.find_all("li",{"class":"type-product"})
         for product in productList:
             link = product.find("a").get("href")
-            self.productLinks.append(link)
+            productLinks.append(link)
+        print(f"🔗 Found {len(productLinks)} product links.")
         
-        for link in self.productLinks:
+        for link in productLinks:
             yield response.follow(link, callback=self.parse_children)
 
     def parse_children(self, response, **kwargs):
         """Getting Product links to extract product single page data"""
-        singleProductPage = requests.get(response.url, headers=self.headers).text
-        soup = BeautifulSoup(singleProductPage, 'html.parser')
+        # singleProductPage = requests.get(response.url, headers=self.headers).text
+        print(f"🔍 Parsing child page: {response.url}")
+        soup = BeautifulSoup(response.text, 'html.parser')
 
         product_details = {}
 
@@ -67,7 +47,6 @@ class MinningSpider(scrapy.Spider):
         try:
             price = [i.text.strip("US$") for i in soup.select('.price bdi:first-child')]
             regular_price = price[0]
-            sale_price = price[1]
         except:
             price = None
 
@@ -76,7 +55,7 @@ class MinningSpider(scrapy.Spider):
             name = summary.select_one("h1").text if summary.select_one("h1") else ""
             sku = summary.select_one(".sku").text if summary.select_one(".sku") else ""
         except:
-            name, sku = ""
+            name, sku = "", ""
 
         try:
             categories = [i.text for i in soup.select("span.posted_in a")]
@@ -101,10 +80,12 @@ class MinningSpider(scrapy.Spider):
             for coin in coin_elements:
                 title = coin.find("p").text if coin.find("p") else "Unknown"
                 image_element = coin.find("img")
-                image_url = image_element["src"] if image_element else ""
+                image_url = image_element["data-lazy-src"] if image_element else ""
                 parsed_url = urlparse(image_url)
                 image_path = parsed_url.path if image_url else ""
+                image_path = re.sub(r"/\d{4}/\d{2}", "/2025/01", image_path)
                 coins.append({"title": title, "image": image_path})
+            print("Extracted coins:", coins) 
             product_details['meta_coins'] = json.dumps(coins)  # Store coins as a JSON string
         except Exception as e:
             coins = []
@@ -123,7 +104,6 @@ class MinningSpider(scrapy.Spider):
 
         product = {
                 "Regular price": regular_price,
-                "Sale price": sale_price,
                 "SKU": sku,
                 "Name": name,
                 "Description": description,
@@ -136,5 +116,8 @@ class MinningSpider(scrapy.Spider):
         yield product
         print(product)
 
-    df = pd.DataFrame(productData)
-    df.to_csv('asicmines.csv', index=False)
+    def close(self, reason):
+        """Save data to CSV after Scrapy finishes crawling"""
+        df = pd.DataFrame(self.productData)
+        df.to_csv('asicmines.csv', index=False)
+        print("✅ CSV saved successfully!")

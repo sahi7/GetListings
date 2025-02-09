@@ -1,8 +1,7 @@
-import re
+import re, os
 import time
 import scrapy
 import random
-from bs4 import BeautifulSoup
 from scrapy.http import HtmlResponse
 from selenium import webdriver
 from selenium.webdriver import ActionChains
@@ -11,16 +10,20 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from rules.actions import Actions
+from rules.pagejRules import scrape_content, get_links
+
 #Selenium stealth -- https://www.zenrows.com/blog/selenium-stealth#scrape-with-stealth
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager #https://pypi.org/project/webdriver-manager/
 from selenium_stealth import stealth
+from rules.actions import Actions
+
 
 class Pagej2Spider(scrapy.Spider):
     name = "pagej2"
-    allowed_domains = ["www.pagesjaunes.fr"]
-    start_urls = ["https://www.pagesjaunes.fr/"]
-    base_url = "https://wwnnuaire.bt/chercherlespros?quoiqui=confiserie%20chocolaterie&ou=Auvergne-Rh%C3%B4ne-Alpes&idOu=R84&page={}"
+    allowed_domains = ["google.com"] # Scrapy can't bypass pagej security
+    start_urls = ["https://www.google.com/"] # Use google for easy by pass by scrapy else selenium will not get url
+    base_url = "https://www.pagesjaunes.fr/annuaire/chercherlespros?quoiqui=creche&ou=Grand-Est&idOu=R44&quoiQuiInterprete=creche&page={}"
     num_pages = 27
     user_agents = [
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Edg/118.0.2088.88',
@@ -28,17 +31,24 @@ class Pagej2Spider(scrapy.Spider):
             'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
             'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36 Vivaldi/6.4.3160.41',
             'Mozilla/5.0 (Windows NT 6.1; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36',
-        ]
-    user_agent = random.choice(user_agents)
+        ]       
+
     def __init__(self, *args, **kwargs):
         super(Pagej2Spider, self).__init__(*args, **kwargs)
         print('🚀  Starting the engine...')
         self.run_stealth()
+
     def run_stealth(self):
+        chrome_profile_path = os.path.abspath('profiles')
+        extension_path = os.path.abspath('extensions/cjpalhdlnbpafiamejdnhcphjbkeiagm')
         service = ChromeService(executable_path=ChromeDriverManager().install()) # create a new Service instance and specify path to Chromedriver executable
+        
         # options = uc.ChromeOptions()
         options = webdriver.ChromeOptions()
-        options.add_argument("--headless")
+        options.add_argument(f"--load-extension={extension_path}")
+        options.add_argument(f"user-data-dir={chrome_profile_path}")
+        # options.add_extension(extension_path)
+        # options.add_argument("--headless")
         options.add_argument('--ignore-certificate-errors')
         options.add_argument('--disable-extensions') # disable extensions
         options.add_argument('--no-sandbox') # disable sandbox mode
@@ -61,71 +71,27 @@ class Pagej2Spider(scrapy.Spider):
             renderer="Intel Iris OpenGL Engine",
             fix_hairline=True,
         )
-    
-    def rotate_proxy_and_user_agent(self):
-        # Set up the driver with the new proxy and user agent
-        proxy = self.proxies[0]
-        options = self.driver.options
-        options.add_argument(f'--proxy-server={proxy}')
-        options.add_argument(f'user-agent={self.user_agent}')
-
 
     def parse(self, response):
+        web_actions = Actions(self.driver)
         for page_num in range(1, self.num_pages + 1):
 
             url = self.base_url.format(page_num)
+            self.driver.get(url)
+            web_actions.scroll_page('down')
+            print(f"Scraped page {page_num}")
+            
+            time.sleep(random.uniform(0.6, 1.5))
+            website  = self.driver.page_source
+            links = get_links(website)
+            for link in links:
+                self.driver.get(link)
+                time.sleep(random.randint(5, 15))
 
-    def scrape_content(self, response_data):
-        results = BeautifulSoup(response_data.body, 'html.parser')
-        try:
-            name = results.find("h1",{"class":"noTrad"}).text.strip()
-            split_name = name.split('\n', 1)  # Split at the first '\n'
-            result_name = split_name[0].strip()
-        except:
-            name = ''
-        postal_code = ""
-        try:
-            address_element = results.select_one('.address-container span.noTrad')
-            if address_element:
-                address = address_element.text.strip()
-                # Extract postal code if available
-                if address:
-                    # Use a regular expression to find a postal code pattern (5 digits)
-                    postal_code_match = re.search(r'\b\d{5}\b', address)
-                    if postal_code_match:
-                        postal_code = postal_code_match.group()
-            else:
-                address = ''
-        except:
-            address = ''
-        try:
-            website = results.select_one('.lvs-container span.value').text
-        except:
-            website = ''
-        try:
-            tel = results.find("span",{"class":"coord-numero"}).text
-        except:
-            tel = ''
-        try:
-            stars = results.find("span",{"class":"categorie-libelle"}).text
-        except:
-            stars = ''
-        try:
-            tariffs = results.select('#tarif-hotel span.prix')
-            tariff_texts = [tariff.get_text() for tariff in tariffs]
-            # Join the extracted texts with a comma
-            all_tariffs = ', '.join(tariff_texts)
-        except:
-            all_tariffs = ""
-        
-        # Yield the scraped results
-        data = {
-            'Name': result_name,
-            'Address': address,
-            'Postal Code': postal_code,
-            'Website': website,
-            'Telephone': tel
-            # 'Stars': stars,
-            # 'Tariffs': all_tariffs
-        }
-        yield data
+                html_content  = self.driver.page_source
+                html_response = HtmlResponse(self.driver.current_url, body=html_content, encoding='utf-8')
+                yield from scrape_content(html_response)
+
+                
+
+    

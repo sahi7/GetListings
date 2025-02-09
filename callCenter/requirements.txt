@@ -7,3 +7,4 @@ selenium-stealth==1.0.6
 webdriver-manager==4.0.1
 fake_useragent==1.4.0
 selenium-authenticated-proxy==1.0.1
+pandas==2.2.3
